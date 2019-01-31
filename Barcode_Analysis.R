@@ -17,14 +17,22 @@ library(sangerseqR)
 #list.files creates a list of all files with a file name ending in ab1
 #path chooses the file the files come from. pattern forces only files with a name that ends in .ab1
 #this allows looping through all the files in a folder
-files <- list.files(path="data", pattern="*.\\.ab1", full.names=TRUE, recursive=FALSE)
+files=list.files(path="data", pattern="*.\\.ab1", full.names=TRUE, recursive=FALSE)
+
+#Import the barcode stats for later
+QC=read.csv("data/BarcodePlateStats.csv")
 
 #lapply applies a function to all the files in a folder, in this case it reads them, converts them to 
-#a readable form, and then pastes the primary sequence into a vector. Regex FASTA still needs to be added
-lapply (files, function(x) {
-  ReadFile <- read.abif(x)
-  Sequence=sangerseq(ReadFile)
-  paste(SeQ1@primarySeq)
+#a readable form, and then pastes the primary sequence into a vector. some Regex FASTA still needs to be added
+PrimaryVec= lapply (files, function(x) {
+  ReadFile=read.abif(x)
+  Readable=sangerseq(ReadFile)
   
+  #this line merges the filename and the primary sequence into one string
+  Seq1=paste(basename(x),Readable@primarySeq)
+ 
+  #regex to finish converting to FASTA, > added along with a \n for a line break. .ab1 removed from title for ease of reading
+  Seq1=gsub("^",">",Seq1)
+  Seq1=gsub(".ab1 ","\n", Seq1)
 })
-Quality=read.csv("Data/BarcodePlateStats.csv")
+
