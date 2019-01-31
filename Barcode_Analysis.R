@@ -22,17 +22,29 @@ files=list.files(path="data", pattern="*.\\.ab1", full.names=TRUE, recursive=FAL
 #Import the barcode stats for later
 QC=read.csv("data/BarcodePlateStats.csv")
 
+QCpass=subset(QC, Ok==TRUE)
+QCpass=QCpass$Chromatogram
+Test=paste(QCpass, collapse = "|")
+
 #lapply applies a function to all the files in a folder, in this case it reads them, converts them to 
 #a readable form, and then pastes the primary sequence into a vector. some Regex FASTA still needs to be added
-PrimaryVec= lapply (files, function(x) {
-  ReadFile=read.abif(x)
+
+PrimaryNullVec= lapply (files, function(x){
+  Pass=grepl(Test,basename(x) ) 
+  
+  if(Pass==TRUE){ ReadFile=read.abif(x)
   Readable=sangerseq(ReadFile)
   
   #this line merges the filename and the primary sequence into one string
   Seq1=paste(basename(x),Readable@primarySeq)
- 
+  
   #regex to finish converting to FASTA, > added along with a \n for a line break. .ab1 removed from title for ease of reading
   Seq1=gsub("^",">",Seq1)
-  Seq1=gsub(".ab1 ","\n", Seq1)
+  Seq1=gsub(".ab1 ",".ab1 \n", Seq1)
+  Seq1=gsub("$","\n\n", Seq1)
+}
 })
+PrimaryVec=PrimaryNullVec[-which(sapply(PrimaryNullVec, is.null))]
+PrimaryVec
+
 
